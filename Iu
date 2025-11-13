@@ -622,7 +622,7 @@ local function monitorHealth(character)
     RunService.Heartbeat:Connect(function()
         if humanoid.Health <= 15 and not isUnderground then
             isUnderground = true
-            humanoid:ChangeState(Enum.HumanoidStateType.Physics) -- ปิดแรงกระแทก
+            humanoid:ChangeState(Enum.HumanoidStateType.Physics)
             goUnderground(root)
             randomMove(root)
         elseif humanoid.Health > 30 and isUnderground then
@@ -642,3 +642,36 @@ end)
 if LocalPlayer.Character then
     monitorHealth(LocalPlayer.Character)
 end
+
+
+getgenv().Infinitestamina = false
+TabMenu:Toggle({
+    Title = "Stamina Infinity​",
+    Default = false,
+    Callback = function(state)
+        getgenv().Infinitestamina = state
+    end
+})
+
+
+local replicated = game:GetService("ReplicatedStorage")
+local SprintModule = require(replicated.Modules.Game.Sprint)
+local consume_stamina = SprintModule.consume_stamina
+local SprintBar = debug.getupvalue(consume_stamina, 2).sprint_bar
+
+local OldConsume = SprintModule.consume_stamina
+local OldUpdate = SprintBar.update
+
+hookfunction(SprintModule.consume_stamina, function(...)
+    if getgenv().Infinitestamina then
+        return
+    end
+    return OldConsume(...)
+end)
+
+hookfunction(SprintBar.update, function(self, ...)
+    if getgenv().Infinitestamina then
+        return OldUpdate(self, 1)
+    end
+    return OldUpdate(self, ...)
+end)
