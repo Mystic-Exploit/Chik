@@ -559,3 +559,84 @@ Players.PlayerRemoving:Connect(function(p)
 end)
 
 local Tab = Window:Tab({Title = "Menu", Icon = "menu"})
+
+
+TabMenu:Toggle({
+    Title = "Anti kill",
+    Default = false,
+    Callback = function(state)
+        ItemESPEnabled = state
+        for _, billboard in pairs(BillboardCache) do
+            if billboard and billboard.Parent then
+                billboard.Enabled = state
+            end
+        end
+    end
+})
+
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+
+local function goUnderground(root)
+    local pos = root.Position
+    root.CFrame = CFrame.new(pos.X, pos.Y - 30, pos.Z)
+end
+
+local function randomMove(root)
+    task.spawn(function()
+        local baseY = root.Position.Y -- คงระดับความลึกไว้
+        root.Anchored = true
+        for i = 1, 25 do
+            local x = math.random(-10, 10)
+            local z = math.random(-10, 10)
+            root.CFrame = CFrame.new(root.Position.X + x, baseY, root.Position.Z + z)
+            task.wait(0.05)
+        end
+        root.Anchored = false
+    end)
+end
+
+local function goUp(root)
+    local pos = root.Position
+    root.CFrame = CFrame.new(pos.X, pos.Y + 30, pos.Z)
+end
+
+local function resetCharacter()
+    local humanoid = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+    if humanoid then
+        humanoid.Health = 0
+    else
+        LocalPlayer:LoadCharacter()
+    end
+end
+
+local function monitorHealth(character)
+    local humanoid = character:WaitForChild("Humanoid")
+    local root = character:WaitForChild("HumanoidRootPart")
+    local isUnderground = false
+
+    RunService.Heartbeat:Connect(function()
+        if humanoid.Health <= 15 and not isUnderground then
+            isUnderground = true
+            humanoid:ChangeState(Enum.HumanoidStateType.Physics) -- ปิดแรงกระแทก
+            goUnderground(root)
+            randomMove(root)
+        elseif humanoid.Health > 30 and isUnderground then
+            isUnderground = false
+            goUp(root)
+            task.wait(1)
+            resetCharacter()
+        end
+    end)
+end
+
+LocalPlayer.CharacterAdded:Connect(function(char)
+    task.wait(1)
+    monitorHealth(char)
+end)
+
+if LocalPlayer.Character then
+    monitorHealth(LocalPlayer.Character)
+end
