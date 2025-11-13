@@ -1,13 +1,13 @@
 local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
 
 local Window = WindUI:CreateWindow({
-    Title = "My Super Hub",
+    Title = "Mystic Hub",
     Icon = "door-open",
     Author = "by .ftgs and .ftgs",
 })
 
 Window:EditOpenButton({
-    Title = "Open Example UI",
+    Title = "Open UI",
     Icon = "monitor",
     CornerRadius = UDim.new(0,16),
     StrokeThickness = 2,
@@ -17,7 +17,7 @@ Window:EditOpenButton({
     Draggable = true,
 })
 
--- Combat Tab
+
 local Tab = Window:Tab({Title = "Combat", Icon = "crosshair"})
 
 local RunService = game:GetService("RunService")
@@ -31,7 +31,7 @@ if not LocalPlayer.Character then
 end
 local MyHead = LocalPlayer.Character:WaitForChild("Head")
 
--- FOV
+
 local FOVRadius = 150
 local FOVEnabled = false
 local FOVLines = {}
@@ -72,7 +72,7 @@ local slider = Tab:Slider({
 })
 slider.Callback(FOVRadius)
 
--- Silent Aim
+
 local SilentAimEnabled = true
 local CurrentTarget
 local head, aimPos
@@ -163,15 +163,15 @@ RunService.RenderStepped:Connect(function()
         targetLine.Visible = false
     end
 end)
--- ESP Tab
+
 local TabESP = Window:Tab({Title = "ESP", Icon = "eye"})
 
--- Toggle Variables
+
 local ESPNameEnabled = false
 local ESPTraceEnabled = false
 local ItemESPEnabled = false
 
--- ESP Name Toggle
+
 TabESP:Toggle({
     Title = "ESP Name",
     Default = false,
@@ -185,7 +185,7 @@ TabESP:Toggle({
     end
 })
 
--- ESP Trace Toggle
+
 TabESP:Toggle({
     Title = "ESP Trace",
     Default = false,
@@ -197,7 +197,7 @@ TabESP:Toggle({
     end
 })
 
--- Item ESP Toggle
+
 TabESP:Toggle({
     Title = "Item ESP",
     Default = false,
@@ -211,7 +211,7 @@ TabESP:Toggle({
     end
 })
 
--- ================= ESP NAME =================
+
 local function createESP(player)
     if player == LocalPlayer then return end
 
@@ -255,7 +255,7 @@ for _, player in ipairs(Players:GetPlayers()) do
 end
 Players.PlayerAdded:Connect(createESP)
 
--- ================= ESP TRACE =================
+
 local Traces = {}
 
 local function createTrace(player)
@@ -299,8 +299,6 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- ================= ITEM ESP =================
--- ใส่โค้ด Item ESP ของคุณเหมือนเดิม (BillboardCache, createBillboardForPlayer, UpdateESP)
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -558,7 +556,7 @@ Players.PlayerRemoving:Connect(function(p)
     end
 end)
 
-local Tab = Window:Tab({Title = "Menu", Icon = "menu"})
+
 
 local AntikillEnabled = false
 
