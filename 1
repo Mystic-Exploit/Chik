@@ -563,11 +563,13 @@ local Tab = Window:Tab({Title = "Menu", Icon = "menu"})
 local AntikillEnabled = false
 
 
+local TabMenu = Window:Tab({Title = "Menu", Icon = "menu"})
+
 TabMenu:Toggle({
     Title = "Anti kill",
     Default = false,
     Callback = function(state)
-        ItemESPEnabled = state
+        AntikillEnabled = state
         for _, billboard in pairs(BillboardCache) do
             if billboard and billboard.Parent then
                 billboard.Enabled = state
