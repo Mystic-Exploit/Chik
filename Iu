@@ -86,18 +86,113 @@ for _, name in pairs(GunNames) do
     GunLookup[name] = true
 end
 
+local function GetClosestTargetInFOVlocal WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
+
+local Window = WindUI:CreateWindow({
+    Title = "Mystic Hub",
+    Icon = "door-open",
+    Author = "by .ftgs and .ftgs",
+})
+
+Window:EditOpenButton({
+    Title = "Open UI",
+    Icon = "monitor",
+    CornerRadius = UDim.new(0,16),
+    StrokeThickness = 2,
+    Color = ColorSequence.new(Color3.fromHex("FF0F7B"), Color3.fromHex("F89B29")),
+    OnlyMobile = false,
+    Enabled = true,
+    Draggable = true,
+})
+
+local Tab = Window:Tab({Title = "Combat", Icon = "crosshair"})
+
+local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+
+
+if not LocalPlayer.Character then
+    LocalPlayer.CharacterAdded:Wait()
+end
+local MyHead = LocalPlayer.Character:WaitForChild("Head")
+
+
+LocalPlayer.CharacterAdded:Connect(function(char)
+    MyHead = char:WaitForChild("Head")
+end)
+
+
+local FOVRadius = 150
+local FOVEnabled = false
+local FOVLines = {}
+local sides = 20
+
+for i = 1, sides do
+    local line = Drawing.new("Line")
+    line.Color = Color3.fromRGB(255,255,255)
+    line.Thickness = 2
+    line.Visible = FOVEnabled
+    table.insert(FOVLines, line)
+end
+
+local targetLine = Drawing.new("Line")
+targetLine.Color = Color3.fromRGB(255,0,0)
+targetLine.Thickness = 2
+targetLine.Visible = FOVEnabled
+
+Tab:Toggle({
+    Title = "Show FOV",
+    Default = false,
+    Callback = function(state)
+        FOVEnabled = state
+        for _, line in pairs(FOVLines) do
+            line.Visible = state
+        end
+        targetLine.Visible = state
+    end
+})
+
+local slider = Tab:Slider({
+    Title = "FOV Size",
+    Step = 1,
+    Value = {Min = 50, Max = 1000, Default = FOVRadius},
+    Callback = function(value)
+        FOVRadius = tonumber(value) or 150
+    end
+})
+slider.Callback(FOVRadius)
+
+
+local SilentAimEnabled = true
+local head, aimPos
+
+local GunNames = {
+    "P226","MP5","M24","Draco","Glock","Sawnoff","Uzi","G3","C9",
+    "Hunting Rifle","Anaconda","AK47","Remington","Double Barrel"
+}
+local GunLookup = {}
+for _, name in pairs(GunNames) do
+    GunLookup[name] = true
+end
+
 local function GetClosestTargetInFOV()
     local closest
     local shortest = math.huge
     local center = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)
     for _, player in pairs(Players:GetPlayers()) do
         if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("Head") then
-            local screenPos, onScreen = Camera:WorldToViewportPoint(player.Character.Head.Position)
-            if onScreen then
-                local dist = (Vector2.new(screenPos.X, screenPos.Y) - center).Magnitude
-                if dist <= FOVRadius and dist < shortest then
-                    shortest = dist
-                    closest = player
+            local humanoid = player.Character:FindFirstChild("Humanoid")
+            if humanoid and humanoid.Health > 0 then
+                local screenPos, onScreen = Camera:WorldToViewportPoint(player.Character.Head.Position)
+                if onScreen then
+                    local dist = (Vector2.new(screenPos.X, screenPos.Y) - center).Magnitude
+                    if dist <= FOVRadius and dist < shortest then
+                        shortest = dist
+                        closest = player
+                    end
                 end
             end
         end
@@ -119,14 +214,15 @@ local function IsHoldingAllowedGun(args)
     return false
 end
 
+
 local send = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Send")
 local oldFire
 oldFire = hookfunction(send.FireServer, function(self, ...)
     local args = {...}
     if SilentAimEnabled and IsHoldingAllowedGun(args) then
-        CurrentTarget = GetClosestTargetInFOV()
-        if CurrentTarget and CurrentTarget.Character and CurrentTarget.Character:FindFirstChild("Head") then
-            head = CurrentTarget.Character.Head
+        local target = GetClosestTargetInFOV()
+        if target and target.Character and target.Character:FindFirstChild("Head") then
+            head = target.Character.Head
             aimPos = head.Position
             args[4] = CFrame.new(1/0,1/0,1/0,0/0,0/0,0/0,0/0,0/0,0/0,0/0,0/0,0/0)
             args[5] = {[1]={[1]={["Instance"]=head,["Position"]=aimPos}}}
@@ -134,6 +230,7 @@ oldFire = hookfunction(send.FireServer, function(self, ...)
     end
     return oldFire(self, unpack(args))
 end)
+
 
 RunService.RenderStepped:Connect(function()
     if not FOVEnabled then return end
@@ -151,18 +248,44 @@ RunService.RenderStepped:Connect(function()
         FOVLines[i].To = points[nextIndex]
     end
 
-    local target = GetClosestTargetInFOV()
-    if target and target.Character and target.Character:FindFirstChild("Head") then
-        local targetHead = target.Character.Head
-        local myScreen = Camera:WorldToViewportPoint(MyHead.Position)
-        local targetScreen = Camera:WorldToViewportPoint(targetHead.Position)
-        targetLine.From = Vector2.new(myScreen.X, myScreen.Y)
-        targetLine.To = Vector2.new(targetScreen.X, targetScreen.Y)
-        targetLine.Visible = true
+    
+    if MyHead then
+        local target = GetClosestTargetInFOV()
+        if target and target.Character and target.Character:FindFirstChild("Head") then
+            head = target.Character.Head
+            local myScreen = Camera:WorldToViewportPoint(MyHead.Position)
+            local targetScreen = Camera:WorldToViewportPoint(head.Position)
+            targetLine.From = Vector2.new(myScreen.X, myScreen.Y)
+            targetLine.To = Vector2.new(targetScreen.X, targetScreen.Y)
+            targetLine.Visible = true
+        else
+            targetLine.Visible = false
+        end
     else
         targetLine.Visible = false
     end
-end)
+end)()
+    local closest
+    local shortest = math.huge
+    local center = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("Head") then
+            local screenPos, onScreen = Camera:WorldToViewportPoint(player.Character.Head.Position)
+            if onScreen then
+                local dist = (Vector2.new(screenPos.X, screenPos.Y) - center).Magnitude
+                if dist <= FOVRadius and dist < shortest then
+                    shortest = dist
+                    closest = player
+                end
+            end
+        end
+    end
+    return closest
+end
+
+local function IsHoldingAllowedGun(args)
+    local ok, weapon = pcall(function() return args[3] end)
+
 
 local TabESP = Window:Tab({Title = "ESP", Icon = "eye"})
 
